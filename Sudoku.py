@@ -285,16 +285,16 @@ class Sudoku:
 
 def main(sudoku):
     s = Sudoku(sudoku)
-    print "We started with this:"
-    print s
+    print("We started with this:")
+    print(s)
     start_time = time.time()
     s.solve()
     elapsed_time = time.time() - start_time
-    print "\n*****************************\n"
+    print("\n*****************************\n")
 
-    print "Solution:"
-    print s
-    print "Solved in {} seconds".format(elapsed_time)
+    print("Solution:")
+    print(s)
+    print("Solved in {} seconds".format(elapsed_time))
 
 if __name__ == '__main__':
     sudoku = [[8, 0, 0, 0, 0, 1, 0, 5, 0], [0, 0, 3, 2, 0, 7, 0, 9, 0], [0, 0, 0, 0, 0, 0, 0, 3, 8],

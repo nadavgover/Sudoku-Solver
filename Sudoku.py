@@ -1,16 +1,20 @@
 import time
+import copy
 
 
 class Sudoku:
     def __init__(self, lines):
-        #  self.is_valid(lines)
         self.lines = lines
 
+        # self.lines_history = iter([self.lines])  # creating a generator that stores all the history of the sudoku, this will be used in the gui
+        self.lines_history = [copy.deepcopy(self.lines)]
         self.squares = []
         self.lines_to_squares(lines)
 
         self.columns = []
         self.lines_to_cols(lines)
+
+        self.is_valid()  # raises an error if the input is an invalid sudoku
 
         self.empty_cells = []  # index of all empty cells
         self.cells_to_fill()
@@ -18,11 +22,32 @@ class Sudoku:
         self.possibilities = {}  # key is cell index and value are all possible numbers
         self.possible_numbers()
 
-    def is_valid(self, lines):
+    def is_valid(self):
+        # make sure all the numbers are between 0-9
         for i in range(9):
             for j in range(9):
-                if lines[i][j] > 9 or lines[i][j] < 0:
-                    raise ValueError
+                if self.lines[i][j] > 9 or self.lines[i][j] < 0:
+                    raise ValueError("Values must be between 1-9")
+
+        # make sure each digit appears only once in a row
+        for line in self.lines:
+            for i in range(1, 10):
+                if line.count(i) > 1:
+                    raise ValueError("The number {} appears more than once in some row.".format(i))
+
+        # make sure each digit appears only once in a column
+        for col in self.columns:
+            for i in range(1, 10):
+                if col.count(i) > 1:
+                    raise ValueError("The number {} appears more than once in some column.".format(i))
+
+        # make sure each digit appears only once in a square
+        for square in self.squares:
+            square = square[0] + square[1] + square[2]
+            for i in range(1, 10):
+                if square.count(i) > 1:
+                    raise ValueError("The number {} appears more than once in some square.".format(i))
+
 
     def __str__(self):
         sudoku = ""
@@ -259,7 +284,13 @@ class Sudoku:
                     else:
                         for wrong_cell in memo[counter]:
                             self.lines[wrong_cell[0]][wrong_cell[1]] = 0
-                        self.__init__(self.lines)
+                            # self.lines_history = itertools.chain(self.lines_history, [self.lines])  # append to history
+                            self.lines_history.append(copy.deepcopy(self.lines))
+                        # self.__init__(self.lines)
+                        self.lines_to_squares(self.lines)
+                        self.lines_to_cols(self.lines)
+                        self.cells_to_fill()
+                        self.possible_numbers()
                         memo.pop(counter)
                         cells_guessed = []
 
@@ -270,6 +301,8 @@ class Sudoku:
                 try:
                     if len(self.possibilities[empty_cell]) == 1:
                         self.fill_cell(empty_cell, self.possibilities[empty_cell][0])
+                        # self.lines_history = itertools.chain(self.lines_history, [self.lines])  # append to history
+                        self.lines_history.append(copy.deepcopy(self.lines))
                         cells_guessed.append(empty_cell)
                 except KeyError:
                     memo[counter] = cells_guessed
@@ -306,5 +339,5 @@ if __name__ == '__main__':
                         [0, 5, 0, 0, 0, 7, 0, 0, 0], [0, 0, 0, 0, 4, 5, 7, 0, 0], [0, 0, 0, 1, 0, 0, 0, 3, 0],
                         [0, 0, 1, 0, 0, 0, 0, 6, 8], [0, 0, 8, 5, 0, 0, 0, 1, 0], [0, 9, 0, 0, 0, 0, 4, 0, 0]]
 
-    main(sudoku=sudoku)
+    main(sudoku=very_hard_sudoku)
 

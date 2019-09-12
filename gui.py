@@ -1,19 +1,10 @@
 from tkinter import *
+import Sudoku
 
 class SudokuGui(object):
     def __init__(self):
         self.root = Tk()
-        """
-        # canvas widget
-        self.c = Canvas(self.root, bg='white', width=270, height=270)
-        # self.c = Canvas(self.root, bg='white', width=28, height=28)
-        self.c.grid(row=0, columnspan=5)
 
-
-        self.prediction = StringVar()  # when this variable is changed the prediction label is automatically changed is well
-        self.prediction_label = Label(self.root, text="", textvariable=self.prediction, justify="center")
-        self.prediction_label.grid(row=2, column=2)
-        """
         font = ('Verdana', 20)  # the size of the font determines the height of the cell
         cell_size = 2
         padding = 2
@@ -275,7 +266,7 @@ class SudokuGui(object):
                                   validate='all', validatecommand=(validate_cmd, '%P'))
         self.cell38_entry.grid(row=3, column=8)
 
-        # first row
+        # fifth row
         self.cell40 = StringVar()
         self.cell40_entry = Entry(self.root, width=cell_size, font=font, justify=CENTER,
                                   borderwidth=0, highlightthickness=1, highlightbackground="black",
@@ -339,7 +330,7 @@ class SudokuGui(object):
                                   validate='all', validatecommand=(validate_cmd, '%P'))
         self.cell48_entry.grid(row=4, column=8)
 
-        # second row
+        # sixth row
         self.cell50 = StringVar()
         self.cell50_entry = Entry(self.root, width=cell_size, font=font, justify=CENTER,
                                   borderwidth=0, highlightthickness=1, highlightbackground="black",
@@ -403,7 +394,7 @@ class SudokuGui(object):
                                   validate='all', validatecommand=(validate_cmd, '%P'))
         self.cell58_entry.grid(row=5, column=8, pady=(0, padding))
 
-        # third row
+        # seventh row
         self.cell60 = StringVar()
         self.cell60_entry = Entry(self.root, width=cell_size, font=font, justify=CENTER,
                                   borderwidth=0, highlightthickness=1, highlightbackground="black",
@@ -467,7 +458,7 @@ class SudokuGui(object):
                                   validate='all', validatecommand=(validate_cmd, '%P'))
         self.cell68_entry.grid(row=6, column=8)
 
-        # fourth row
+        # eighth row
         self.cell70 = StringVar()
         self.cell70_entry = Entry(self.root, width=cell_size, font=font, justify=CENTER,
                                   borderwidth=0, highlightthickness=1, highlightbackground="black",
@@ -531,7 +522,7 @@ class SudokuGui(object):
                                   validate='all', validatecommand=(validate_cmd, '%P'))
         self.cell78_entry.grid(row=7, column=8)
 
-        # third row
+        # ninth row
         self.cell80 = StringVar()
         self.cell80_entry = Entry(self.root, width=cell_size, font=font, justify=CENTER,
                                   borderwidth=0, highlightthickness=1, highlightbackground="black",
@@ -595,6 +586,22 @@ class SudokuGui(object):
                                   validate='all', validatecommand=(validate_cmd, '%P'))
         self.cell88_entry.grid(row=8, column=8)
 
+        self.solve_with_animation_button = Button(self.root, text="solve with\nanimation", command=self.solve_with_animation)
+        self.solve_with_animation_button.grid(row=9, column=3, columnspan=3, pady=5)
+
+        self.solve_without_animation_button = Button(self.root, text="solve without\nanimation",
+                                                  command=self.solve_without_animation)
+        self.solve_without_animation_button.grid(row=9, column=0, columnspan=3, pady=5)
+
+        self.reset_button = Button(self.root, text="reset",
+                                                  command=self.reset)
+        self.reset_button.grid(row=9, column=7, columnspan=1, pady=5)
+
+
+        self.message_label_stringvar = StringVar()
+        self.message_label = Label(self.root, textvariable=self.message_label_stringvar, justify=CENTER)
+        self.message_label.grid(row=10, column=0, columnspan=9)
+
 
         # define a list that is built like the Sudoku.lines, each element is a string var
         self.cells = [
@@ -609,16 +616,116 @@ class SudokuGui(object):
             [self.cell80, self.cell81, self.cell82, self.cell83, self.cell84, self.cell85, self.cell86, self.cell87, self.cell88]
                       ]
 
+        self.root.title("Sudoku Solver")
         # run the app
         self.root.mainloop()
 
     def allow_only_one_digit(self, P):
-        if len(P) > 1:
+        if len(P) > 1:  # allow only one character
             return False
-        if str.isdigit(P) or P == "":
+        if str.isdigit(P) and int(P) == 0:  # don't allow zero
+            return False
+        if str.isdigit(P) or P == "":  # make sure it is a digit
             return True
         else:
             return False
+
+    def solve_with_animation(self):
+        self.message_label_stringvar.set("")  # so if the user presses solve_with_animation and there is an error message so it will delete it
+        sudoku = self.extract_sudoku_out_of_gui()
+
+        # Checking the sudoku is valid
+        try:
+            sudoku = Sudoku.Sudoku(sudoku)
+        except ValueError as e:
+            self.message_label_stringvar.set(str(e) + "\nFix this and then try again.")
+            return
+
+        sudoku.solve()
+        self.animate_solving(sudoku_history=sudoku.lines_history, counter=1, prev_i=0, prev_j=-1)
+
+    def animate_solving(self, sudoku_history, counter, prev_i, prev_j):
+        """Animate the solving, showing how the back tracking works"""
+
+        # stop condition
+        try:
+            sudoku = sudoku_history[counter]
+        except IndexError:
+            self.message_label_stringvar.set("Solved!")
+            return # stop animation
+
+        j = prev_j + 1
+        i = prev_i
+        if j > 8:
+            i += 1
+            j = 0
+        if i > 8:
+            counter += 1
+            i = 0
+            j = -1
+
+        digit = sudoku[i][j]
+
+        if digit == 0:
+            digit = ""
+            sleep_time = 1
+        else:
+            digit = str(digit)
+            sleep_time = 20
+        if self.cells[i][j]:
+            sleep_time = 1
+        self.cells[i][j].set(digit)
+
+        prev_i, prev_j = i, j
+        self.callId = self.root.after(sleep_time, self.animate_solving, sudoku_history, counter, prev_i, prev_j)
+
+    def solve_without_animation(self):
+        self.message_label_stringvar.set("")  # so if the user presses solve_without_animation and there is an error message so it will delete it
+        sudoku = self.extract_sudoku_out_of_gui()
+
+        # Checking the sudoku is valid
+        try:
+            sudoku = Sudoku.Sudoku(sudoku)
+        except ValueError as e:
+            self.message_label_stringvar.set(str(e) + "\nFix this and then try again.")
+            return
+
+        sudoku.solve()  # solve the sudoku using the Sudoku class
+
+        # fill all the cells with the proper values
+        for i in range(9):
+            for j in range(9):
+                self.cells[i][j].set(sudoku.lines[i][j])
+
+        self.message_label_stringvar.set("Solved!")
+
+    def reset(self):
+
+        # if solve with animation is going on then stop it
+        if self.callId is not None:
+            self.root.after_cancel(self.callId)
+
+        # reset all the cells
+        for i in range(9):
+            for j in range(9):
+                self.cells[i][j].set("")
+
+    def extract_sudoku_out_of_gui(self):
+        sudoku = []
+        for i in range(9):
+            line = []
+            for j in range(9):
+                curr_cell = self.cells[i][j]
+                digit = curr_cell.get()
+                if digit == "":
+                    digit = 0
+                else:
+                    digit = int(digit)
+
+                line.append(digit)
+            sudoku.append(line)
+        return sudoku
+
 
 
 if __name__ == '__main__':

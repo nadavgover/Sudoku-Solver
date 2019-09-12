@@ -597,7 +597,7 @@ class SudokuGui(object):
 
         self.reset_button = Button(self.root, text="reset",
                                                   command=self.reset)
-        self.reset_button.grid(row=9, column=7, columnspan=1, pady=5)
+        self.reset_button.grid(row=9, column=6, columnspan=3, pady=5)
 
 
         self.message_label_stringvar = StringVar()

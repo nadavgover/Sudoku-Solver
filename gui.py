@@ -4,6 +4,8 @@ import Sudoku
 class SudokuGui(object):
     def __init__(self):
         self.root = Tk()
+        self.sudoku = None
+        self.callId = None
 
         font = ('Verdana', 20)  # the size of the font determines the height of the cell
         cell_size = 2
@@ -632,17 +634,17 @@ class SudokuGui(object):
 
     def solve_with_animation(self):
         self.message_label_stringvar.set("")  # so if the user presses solve_with_animation and there is an error message so it will delete it
-        sudoku = self.extract_sudoku_out_of_gui()
+        self.sudoku = self.extract_sudoku_out_of_gui()
 
         # Checking the sudoku is valid
         try:
-            sudoku = Sudoku.Sudoku(sudoku)
+            self.sudoku = Sudoku.Sudoku(self.sudoku)
         except ValueError as e:
             self.message_label_stringvar.set(str(e) + "\nFix this and then try again.")
             return
 
-        sudoku.solve()
-        self.animate_solving(sudoku_history=sudoku.lines_history, counter=1, prev_i=0, prev_j=-1)
+        self.sudoku.solve()
+        self.animate_solving(sudoku_history=self.sudoku.lines_history, counter=1, prev_i=0, prev_j=-1)
 
     def animate_solving(self, sudoku_history, counter, prev_i, prev_j):
         """Animate the solving, showing how the back tracking works"""
@@ -652,6 +654,7 @@ class SudokuGui(object):
             sudoku = sudoku_history[counter]
         except IndexError:
             self.message_label_stringvar.set("Solved!")
+            self.callId = None
             return # stop animation
 
         j = prev_j + 1
@@ -681,34 +684,45 @@ class SudokuGui(object):
 
     def solve_without_animation(self):
         self.message_label_stringvar.set("")  # so if the user presses solve_without_animation and there is an error message so it will delete it
-        sudoku = self.extract_sudoku_out_of_gui()
+        self.sudoku = self.extract_sudoku_out_of_gui()
 
         # Checking the sudoku is valid
         try:
-            sudoku = Sudoku.Sudoku(sudoku)
+            self.sudoku = Sudoku.Sudoku(self.sudoku)
         except ValueError as e:
             self.message_label_stringvar.set(str(e) + "\nFix this and then try again.")
             return
 
-        sudoku.solve()  # solve the sudoku using the Sudoku class
-
+        self.sudoku.solve()  # solve the sudoku using the Sudoku class
         # fill all the cells with the proper values
         for i in range(9):
             for j in range(9):
-                self.cells[i][j].set(sudoku.lines[i][j])
+                self.cells[i][j].set(self.sudoku.lines[i][j])
 
         self.message_label_stringvar.set("Solved!")
+        self.callId = None
 
     def reset(self):
-
+        self.message_label_stringvar.set("")
         # if solve with animation is going on then stop it
         if self.callId is not None:
             self.root.after_cancel(self.callId)
 
-        # reset all the cells
-        for i in range(9):
-            for j in range(9):
-                self.cells[i][j].set("")
+            # set the board to the initial user input
+            sudoku = self.sudoku.lines_history[0]
+            for i in range(9):
+                for j in range(9):
+                    digit = sudoku[i][j]
+                    digit = '' if digit == 0 else str(digit)
+                    self.cells[i][j].set(digit)
+
+        else:
+            # reset all the cells
+            for i in range(9):
+                for j in range(9):
+                    self.cells[i][j].set("")
+
+        self.callId = None
 
     def extract_sudoku_out_of_gui(self):
         sudoku = []
@@ -725,7 +739,6 @@ class SudokuGui(object):
                 line.append(digit)
             sudoku.append(line)
         return sudoku
-
 
 
 if __name__ == '__main__':
